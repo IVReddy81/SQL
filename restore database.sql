@@ -9,4 +9,14 @@ GO
 --when DB is showing as restore use 
 restore database AWS with recovery
 
+--to take offline the DB
+use master
+alter database AWS4 set offline
+
+--to take online the DB
+use master
+alter database AWS4 set online
+
+
+
 

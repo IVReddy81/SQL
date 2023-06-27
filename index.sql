@@ -1,20 +1,40 @@
-select * from INFORMATION_SCHEMA.TABLE_CONSTRAINTS  --toknow constaraints
-select * from INFORMATION_SCHEMA.COLUMNS  --to know all the columns
-select * from INFORMATION_SCHEMA.VIEWS  --to know views
 
---Index: Indexes are used to retrieve data from the database more quickly than otherwise.
---clustered index: allows duplicates in the column
-create clustered index id1 --create clustered index idxname on tblname(colname1,colname2,....)
-on t2(id1) --or on t2(name,id1)
+select * from sys.indexes  --to get info about indexes in DB
 
---unique index: doesn't allow duplicates in the column
-create unique index ud1
-on t2(id1)
+select * from sys.dm_db_index_physical_stats(DB_ID('DB name'),OBJECT_ID('[Schema name].[table name]'),null,null,null) s
+inner join sys.indexes i
+on s.object_id=i.object_id and s.index_id=i.index_id   -- to know index fragmentation percentage
 
---non clustered index: we can create as many as NCI, but clustered should be only one per table
-create nonclustered index nd1
-on t2(name,id1)
+--create cluster index
+create clustered index CIX on [dbo].[hello](id asc)  --create clustered index [index name] on [table](column asc/desc)
+--create non cluster index
+create nonclustered index ncix on dbo.hello(id desc) 
 
-drop index t2.id1  --to drop index: drop index tbl.colname
-drop index t2.nd1
-drop index t2.ud1
+--to drop index
+drop index hello.ncix  --drop index tablename.indexname
+drop index [NonClusteredIndex-20230428-121713] on hello --drop index indexname on tablename
+
+--fragmentation - as no.of data adding or removing from tables, index also effected hence it leaves balnks in the pages casuing fragmentation
+--to remove fragmentation use reorganize or rebuild
+--reorganize index -only removes the empty blanks in the page (when frgamentation per between 5% and 29.99%)
+alter index CIX on [dbo].[hello] reorganize  --alter index [indexname] on [tablename] reorganize
+
+--rebuild index - rebuilds all the index from scratch (pages will create from scratch) (when fragmentation >30%)
+alter index cix on hello rebuild with (online=on)
+
+--fill factor - if 80 then data will move to next page when current page is at 80%
+create unique clustered index ucix on hello(id desc) with (fillfactor=80)
+--we can use fillfactor with rebuild also
+alter index ucix on hello rebuild with (online=off,fillfactor=80)
+
+--we cannot use fillfactor with reorganize
+
+--to know about unused indexes (if user_sees=user_sacns=user_looksups=0 then that index is of no use, you can drop or disable the index)
+select OBJECT_NAME(s.object_id) 'table',name 'index_name',* from sys.dm_db_index_usage_stats s join sys.indexes i on s.object_id=i.object_id and i.index_id=s.index_id
+
+--disable index
+alter index [PK_Password_BusinessEntityID] on [Person].[Password] disable
+ 
+--to create statistics (used for query optimization)
+create statistics snew on [Person].[Password]([PasswordHash]) --create statistics [sname] on schemaname.tablename(columnname)
+
