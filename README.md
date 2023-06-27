@@ -1,1 +1,2 @@
-# SQLThis is my repository consists of all important SQL commands
+This is my repository consists of all important SQL commands
+Please let me know if there are any suggestions
